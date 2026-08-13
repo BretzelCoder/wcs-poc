@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PoC WCS — Warehouse Control System</title>
+<style>
+  :root{
+    --surface-1:#fcfcfb;
+    --page:#f9f9f7;
+    --ink-1:#0b0b0b;
+    --ink-2:#52514e;
+    --ink-muted:#898781;
+    --grid:#e1e0d9;
+    --baseline:#c3c2b7;
+    --border:rgba(11,11,11,0.10);
+    --lane-a:#2a78d6;
+    --lane-a-soft:#e7f0fb;
+    --lane-b:#eb6834;
+    --lane-b-soft:#fdeee6;
+    --good:#0ca30c;
+    --warning:#fab219;
+    --serious:#ec835a;
+    --critical:#d03b3b;
+    --good-soft:#e6f6e6;
+    --warning-soft:#fef3dc;
+    --critical-soft:#fbe6e6;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:var(--page);
+    color:var(--ink-1);
+    padding:18px;
+  }
+  h1,h2,h3{margin:0;}
+  .app{max-width:1440px;margin:0 auto;display:flex;flex-direction:column;gap:14px;}
+
+  /* ---------- Header ---------- */
+  .header{
+    background:var(--surface-1);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .header .title{display:flex;flex-direction:column;gap:2px;}
+  .header .title h1{font-size:18px;font-weight:700;}
+  .header .title .sub{font-size:12.5px;color:var(--ink-2);}
+  .controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .btn{
+    font: inherit;
+    font-size:13px;
+    font-weight:600;
+    padding:8px 13px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--surface-1);
+    color:var(--ink-1);
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:background .15s, transform .05s;
+  }
+  .btn:hover{background:var(--page);}
+  .btn:active{transform:scale(0.97);}
+  .btn.primary{background:var(--lane-a);color:#fff;border-color:var(--lane-a);}
+  .btn.primary:hover{background:#2568bd;}
+  .btn.warn{background:var(--critical);color:#fff;border-color:var(--critical);}
+  .btn.warn:hover{background:#b53232;}
+  .btn.ghost{background:transparent;}
+  .btn.small{padding:5px 9px;font-size:11.5px;}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .speedgrp{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .speedgrp button{
+    font:inherit;font-size:12.5px;font-weight:700;padding:8px 11px;border:none;
+    background:var(--surface-1);color:var(--ink-2);cursor:pointer;border-right:1px solid var(--border);
+  }
+  .speedgrp button:last-child{border-right:none;}
+  .speedgrp button.active{background:var(--lane-a);color:#fff;}
+  .toggle{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);cursor:pointer;user-select:none;}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;
+  }
+  .pill.run{background:var(--good-soft);color:#0a7d0a;}
+  .pill.pause{background:var(--warning-soft);color:#8a6100;}
+  .pill.warn{background:var(--warning-soft);color:#8a6100;}
+  .pill.crit{background:var(--critical-soft);color:var(--critical);}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+
+  /* ---------- Intro / legend ---------- */
+  .intro{
+    background:var(--surface-1);border:1px solid var(--border);border-radius:12px;
+    padding:12px 18px;font-size:13px;color:var(--ink-2);line-height:1.5;
+  }
+  .intro strong{color:var(--ink-1);}
+  .intro summary{cursor:pointer;font-weight:700;color:var(--ink-1);font-size:13.5px;}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;}
+  .legend .item{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);}
+  .swatch{width:12px;height:12px;border-radius:4px;flex:none;}
+
+  /* ---------- KPI row ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+  .kpi{
+    background:var(--surface-1);border:1px solid var(--border);border-radius:12px;
+    padding:12px 14px;display:flex;flex-direction:column;gap:4px;
+  }
+  .kpi .label{font-size:11.5px;color:var(--ink-muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+  .kpi .value{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink-1);}
+  .kpi .value.alert{color:var(--critical);}
+
+  /* ---------- Saturation panel ---------- */
+  .satpanel{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+  .satpanel .satleft{flex:1 1 260px;min-width:220px;display:flex;flex-direction:column;gap:6px;}
+  .satpanel .sathead{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .satpanel .sathead h2{font-size:13.5px;font-weight:700;}
+  .satpanel .satpct{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .bar.big{height:12px;border-radius:6px;}
+  .satmeta{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);}
+  .satmeta b{color:var(--ink-1);font-variant-numeric:tabular-nums;}
+  .satactions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .pending-flag{display:none;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--critical);
+    background:var(--critical-soft);padding:4px 9px;border-radius:999px;}
+  .pending-flag.show{display:inline-flex;}
+
+  /* ---------- Main grid ---------- */
+  .main{display:grid;grid-template-columns:1.55fr 1fr;gap:14px;align-items:start;}
+  .panel{
+    background:var(--surface-1);border:1px solid var(--border);border-radius:12px;
+    padding:14px 16px;display:flex;flex-direction:column;gap:10px;
+  }
+  .panel-head{display:flex;align-items:center;justify-content:space-between;}
+  .panel-head h2{font-size:13.5px;font-weight:700;}
+  .panel-head .hint{font-size:11.5px;color:var(--ink-muted);}
+
+  /* ---------- Map ---------- */
+  .mapwrap{position:relative;width:100%;aspect-ratio:100/58;background:var(--page);
+    border:1px solid var(--grid);border-radius:10px;overflow:hidden;}
+  .mapwrap svg{position:absolute;inset:0;width:100%;height:100%;}
+  .zone{
+    position:absolute;border:1.5px dashed var(--baseline);border-radius:8px;
+    background:rgba(255,255,255,0.5);
+  }
+  .zone .zlabel{
+    position:absolute;top:4px;left:6px;font-size:10.5px;font-weight:700;color:var(--ink-2);
+    text-transform:uppercase;letter-spacing:.02em;
+  }
+  .zone.sorter{background:rgba(42,120,214,0.06);border-color:var(--lane-a);}
+  .zone.packA{background:var(--lane-a-soft);border-color:var(--lane-a);}
+  .zone.packB{background:var(--lane-b-soft);border-color:var(--lane-b);}
+  .zone.ship{background:rgba(11,163,11,0.06);border-color:var(--good);}
+  .bin{
+    position:absolute;border-radius:4px;border:1px solid var(--grid);background:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:8.5px;color:var(--ink-muted);
+    font-weight:700;
+  }
+  .bin.stocked{border-color:var(--lane-a);}
+  .bin.low{border-color:var(--warning);background:var(--warning-soft);}
+  .bin.empty0{border-color:var(--critical);background:var(--critical-soft);}
+  .point{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--baseline);transform:translate(-50%,-50%);}
+  .tote{
+    position:absolute;width:16px;height:16px;border-radius:5px;transform:translate(-50%,-50%);
+    box-shadow:0 1px 3px rgba(0,0,0,.25);border:1.5px solid rgba(255,255,255,.8);
+    display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#fff;
+    z-index:5;
+  }
+  .tote.laneA{background:var(--lane-a);}
+  .tote.laneB{background:var(--lane-b);}
+  .tote.fade{opacity:0;transition:opacity .5s;}
+
+  /* ---------- Equipment list ---------- */
+  .eq-list{display:flex;flex-direction:column;gap:7px;}
+  .eq-card{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--page);
+  }
+  .eq-card .who{display:flex;align-items:center;gap:8px;}
+  .eq-name{font-size:12.5px;font-weight:700;}
+  .eq-sub{font-size:10.5px;color:var(--ink-muted);}
+  .status-badge{
+    display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
+    padding:3px 8px;border-radius:999px;white-space:nowrap;
+  }
+  .status-badge .dot{width:6px;height:6px;}
+  .status-badge.ok{background:var(--good-soft);color:#0a7d0a;}
+  .status-badge.busy{background:var(--lane-a-soft);color:var(--lane-a);}
+  .status-badge.error{background:var(--critical-soft);color:var(--critical);animation:pulse 1.1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
+
+  /* ---------- Tables / lists ---------- */
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{
+    text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;
+    color:var(--ink-muted);font-weight:700;padding:5px 6px;border-bottom:1px solid var(--grid);
+  }
+  td{padding:6px 6px;border-bottom:1px solid var(--grid);color:var(--ink-2);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .scrollbox{max-height:230px;overflow-y:auto;}
+  .tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;}
+  .tag.laneA{background:var(--lane-a-soft);color:var(--lane-a);}
+  .tag.laneB{background:var(--lane-b-soft);color:var(--lane-b);}
+  .tag.attente{background:var(--warning-soft);color:#8a6100;}
+  .tag.cours{background:var(--lane-a-soft);color:var(--lane-a);}
+  .tag.expediee{background:var(--good-soft);color:#0a7d0a;}
+
+  /* ---------- Bins panel ---------- */
+  .bin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .bin-card{border:1px solid var(--border);border-radius:8px;padding:7px 8px;background:var(--page);}
+  .bin-card .sku{font-size:11px;font-weight:700;color:var(--ink-1);}
+  .bin-card .ref{font-size:10px;color:var(--ink-muted);margin-bottom:4px;}
+  .bar{height:5px;border-radius:3px;background:var(--grid);overflow:hidden;margin-top:4px;}
+  .bar > span{display:block;height:100%;background:var(--lane-a);}
+  .bar.warn > span{background:var(--warning);}
+  .bar.crit > span{background:var(--critical);}
+  .bin-card .qty{font-size:10.5px;color:var(--ink-2);margin-top:3px;display:flex;justify-content:space-between;}
+  .bin-card.empty{opacity:.5;}
+  .bin-card.libre{border-style:dashed;display:flex;align-items:center;justify-content:center;min-height:52px;
+    color:var(--ink-muted);font-size:11px;}
+  .bin-card.freed{border-color:var(--good);}
+
+  /* ---------- Event log ---------- */
+  .log{display:flex;flex-direction:column-reverse;gap:0;font-size:11.5px;font-family: ui-monospace, SFMono-Regular, Menlo, monospace;}
+  .log .entry{padding:4px 2px;border-bottom:1px dashed var(--grid);color:var(--ink-2);}
+  .log .entry .t{color:var(--ink-muted);margin-right:6px;}
+  .log .entry.wms{color:var(--lane-a);}
+  .log .entry.warn{color:#8a6100;}
+  .log .entry.crit{color:var(--critical);}
+  .log .entry.good{color:#0a7d0a;}
+
+  /* ---------- WMS panel ---------- */
+  .wms-flow{display:flex;align-items:center;justify-content:center;gap:10px;font-size:11.5px;color:var(--ink-muted);margin-bottom:4px;}
+  .wms-flow b{color:var(--ink-1);}
+  .arrow{font-size:16px;color:var(--lane-a);}
+
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:980px){
+    .main{grid-template-columns:1fr;}
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .row2{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="title">
+      <h1>🏭 PoC — Warehouse Control System (WCS)</h1>
+      <div class="sub">Démo cliquable : orchestration des équipements d'entrepôt entre la réception des ordres WMS et l'expédition</div>
+    </div>
+    <div class="controls">
+      <span id="runPill" class="pill run"><span class="dot"></span>Simulation active</span>
+      <button class="btn primary" id="btnPlayPause">⏸ Pause</button>
+      <div class="speedgrp" id="speedGrp">
+        <button data-speed="1" class="active">1×</button>
+        <button data-speed="2">2×</button>
+        <button data-speed="4">4×</button>
+      </div>
+      <button class="btn" id="btnReset">↺ Réinitialiser</button>
+    </div>
+  </div>
+
+  <details class="intro" open>
+    <summary>Comment lire cette démo ?</summary>
+    <div style="margin-top:8px;">
+      Le <strong>WMS</strong> (système de gestion d'entrepôt, en amont) envoie des <strong>ordres</strong> au <strong>WCS</strong>.
+      Le WCS est le chef d'orchestre : il <strong>dispatch</strong> chaque ordre vers un <strong>chariot autonome (AGV)</strong> disponible,
+      fait circuler le colis sur les <strong>convoyeurs</strong>, le fait router par le <strong>trieur</strong> vers la bonne zone
+      d'<strong>emballage</strong>, puis vers l'<strong>expédition</strong> — tout en confirmant chaque étape au WMS.
+      Utilisez les boutons pour injecter des commandes, déclencher une panne d'équipement ou simuler une réception fournisseur,
+      et observez comment le WCS réagit en temps réel. Le stockage suit une politique de <strong>slotting dynamique</strong> :
+      un emplacement n'est pas figé sur un SKU — quand son emplacement principal est plein, une réception est automatiquement
+      réaffectée vers un emplacement libre, et un emplacement vidé par un prélèvement redevient disponible pour n'importe
+      quel produit. Le bandeau « Saturation de l'entrepôt » ci-dessous suit l'occupation globale des 18 emplacements et
+      permet de déclencher un <strong>compactage</strong> manuel pour reconsolider les stocks fragmentés.
+    </div>
+    <div class="legend">
+      <div class="item"><span class="swatch" style="background:var(--lane-a)"></span>Flux lane A (emballage A)</div>
+      <div class="item"><span class="swatch" style="background:var(--lane-b)"></span>Flux lane B (emballage B)</div>
+      <div class="item"><span class="swatch" style="background:var(--good)"></span>● Équipement disponible</div>
+      <div class="item"><span class="swatch" style="background:var(--lane-a)"></span>● Équipement en service</div>
+      <div class="item"><span class="swatch" style="background:var(--critical)"></span>● Équipement en panne</div>
+      <div class="item"><span class="swatch" style="background:var(--warning)"></span>⚠ Stock faible</div>
+    </div>
+  </details>
+
+  <div class="kpis" id="kpiRow"></div>
+
+  <div class="panel satpanel">
+    <div class="satleft">
+      <div class="sathead">
+        <h2>Saturation de l'entrepôt</h2>
+        <span id="satPct" class="satpct">0%</span>
+      </div>
+      <div class="bar big" id="satBarWrap"><span id="satBar" style="width:0%"></span></div>
+      <div class="satmeta">
+        <span id="satStatusPill" class="pill run"><span class="dot"></span><span id="satStatusText">Capacité disponible</span></span>
+        <span>Emplacements libres : <b id="satFree">18 / 18</b></span>
+        <span id="satPendingFlag" class="pending-flag">⛔ <span id="satPendingText">0 réception(s) en attente</span></span>
+      </div>
+    </div>
+    <div class="satactions">
+      <button class="btn" id="btnCompact">🧹 Réorganiser / Compacter le stock</button>
+      <button class="btn" id="btnFlushPending" style="display:none;">▶ Relancer les réceptions en attente</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- LEFT: Map + Bins -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Plan de l'entrepôt</h2>
+          <span class="hint">Réception → Stockage → Convoyeur → Trieur → Emballage → Expédition</span>
+        </div>
+        <div class="mapwrap" id="mapWrap">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" id="conveyorSvg"></svg>
+          <!-- zones & bins injected by JS -->
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Stocks (bins)</h2>
+            <span class="hint" id="binsHint"></span>
+          </div>
+          <div class="bin-grid" id="binGrid"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Interface WMS ↔ WCS (simulée)</h2></div>
+          <div class="wms-flow"><b>WMS</b><span class="arrow">⇄</span><b>WCS</b></div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="btn primary" id="btnNewOrder">＋ Nouvelle commande (push WMS)</button>
+            <button class="btn" id="btnRestock">📦 Réception fournisseur</button>
+            <label class="toggle"><input type="checkbox" id="chkAuto"> Génération automatique de commandes</label>
+          </div>
+          <div class="scrollbox" style="max-height:150px;">
+            <div class="log" id="wmsLog"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Equipment / Tasks / Log -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Équipements</h2>
+          <button class="btn warn small" id="btnFault">⚡ Provoquer une panne</button>
+        </div>
+        <div class="eq-list" id="eqList"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>File des commandes / tâches</h2>
+          <span class="hint" id="taskHint"></span>
+        </div>
+        <div class="scrollbox">
+          <table>
+            <thead><tr><th>Commande</th><th>SKU</th><th>Qté</th><th>Lane</th><th>Statut</th><th>Chariot</th></tr></thead>
+            <tbody id="taskBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Journal d'événements</h2></div>
+        <div class="scrollbox" style="max-height:260px;">
+          <div class="log" id="eventLog"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================
+     CONFIGURATION — géométrie du plan (coordonnées en % 0-100)
+  ========================================================== */
+  var ZONES = {
+    recv:    {x:2,  y:4,  w:16, h:14, label:"Réception", cls:""},
+    storage: {x:2,  y:22, w:16, h:74, label:"Stockage",  cls:""},
+    sorter:  {x:44, y:50, w:10, h:16, label:"Trieur",    cls:"sorter"},
+    packA:   {x:64, y:6,  w:16, h:18, label:"Emballage A", cls:"packA"},
+    packB:   {x:64, y:76, w:16, h:18, label:"Emballage B", cls:"packB"},
+    ship:    {x:86, y:40, w:12, h:20, label:"Expédition", cls:"ship"}
+  };
+  // sous-zone dédiée à la grille de bins, laisse de la place au libellé "Stockage" en haut
+  var STORAGE_BINS = {x:2, y:29, w:16, h:64};
+  var ENTRY  = {x:24, y:58};
+  var SORTC  = {x:49, y:58};
+  var PACKA_C= {x:72, y:15};
+  var PACKB_C= {x:72, y:85};
+  var SHIPC  = {x:92, y:50};
+
+  var CONV_LINES = [
+    {id:"convMain",  p1:ENTRY,  p2:SORTC},
+    {id:"convPackA", p1:{x:54,y:55}, p2:PACKA_C},
+    {id:"convPackB", p1:{x:54,y:61}, p2:PACKB_C},
+    {id:"convShipA", p1:{x:80,y:15}, p2:SHIPC, faultable:false},
+    {id:"convShipB", p1:{x:80,y:85}, p2:SHIPC, faultable:false}
+  ];
+
+  var BIN_COLS = 3, BIN_ROWS = 6, BIN_COUNT = BIN_COLS*BIN_ROWS;
+  // Capacité physique d'un emplacement (indépendante du produit qui l'occupe —
+  // c'est ce qui rend le slotting dynamique possible : un emplacement libéré
+  // peut accueillir n'importe quel SKU).
+  var PER_BIN_CAP = 60;
+
+  // Catalogue produit : données maîtres uniquement (pas de quantité/capacité —
+  // celles-ci vivent sur les emplacements, cf. bins).
+  var CATALOG = [
+    {sku:"REF-1001", name:"Casque audio",        lane:"A", initQty:40},
+    {sku:"REF-1002", name:"Clavier mécanique",    lane:"A", initQty:35},
+    {sku:"REF-1003", name:"Souris sans fil",      lane:"B", initQty:50},
+    {sku:"REF-1004", name:"Chargeur USB-C",       lane:"A", initQty:18},
+    {sku:"REF-1005", name:"Enceinte Bluetooth",   lane:"B", initQty:30},
+    {sku:"REF-1006", name:"Câble HDMI",           lane:"A", initQty:45},
+    {sku:"REF-1007", name:"Webcam HD",            lane:"B", initQty:12},
+    {sku:"REF-1008", name:"Support téléphone",    lane:"A", initQty:38},
+    {sku:"REF-1009", name:"Batterie externe",     lane:"B", initQty:25},
+    {sku:"REF-1010", name:"Tapis de souris",      lane:"A", initQty:42}
+  ];
+
+  var DUR = { toEntry:2200, conveyor:1800, sort:700, toPack:1600, pack:900, toShip:1400 };
+  var FAULT_MIN=7000, FAULT_MAX=13000;
+  var AUTO_MIN=5000, AUTO_MAX=9000;
+  var TICK_MS = 100;
+
+  /* =========================================================
+     STATE
+  ========================================================== */
+  var state = null;
+
+  function freshState(){
+    var bins = [];
+    for (var i=0;i<BIN_COUNT;i++){
+      var col=i%BIN_COLS, row=Math.floor(i/BIN_COLS);
+      var cx = STORAGE_BINS.x + STORAGE_BINS.w*(col+0.5)/BIN_COLS;
+      var cy = STORAGE_BINS.y + STORAGE_BINS.h*(row+0.5)/BIN_ROWS;
+      var item = CATALOG[i] || null;
+      bins.push({
+        id:"B"+String(i+1).padStart(2,"0"),
+        x:cx, y:cy,
+        sku: item ? item.sku : null,
+        name: item ? item.name : null,
+        lane: item ? item.lane : null,
+        qty: item ? item.initQty : 0,
+        cap: PER_BIN_CAP
+      });
+    }
+    return {
+      simTime:0,
+      running:true,
+      speed:1,
+      autoGen:false,
+      nextAutoAt: AUTO_MIN,
+      nextOrderSeq:1001,
+      nextToteSeq:1,
+      orders:[],
+      totes:[],
+      bins:bins,
+      pendingReceipts:[],
+      equip:{
+        agv1:{id:"agv1", label:"AGV-1", sub:"Chariot autonome", status:"ok"},
+        agv2:{id:"agv2", label:"AGV-2", sub:"Chariot autonome", status:"ok"},
+        convMain:{id:"convMain", label:"Convoyeur principal", sub:"Réception → Trieur", status:"ok"},
+        sorter:{id:"sorter", label:"Trieur automatique", sub:"Routage colis", status:"ok"},
+        convPackA:{id:"convPackA", label:"Convoyeur Emballage A", sub:"Trieur → Zone A", status:"ok"},
+        convPackB:{id:"convPackB", label:"Convoyeur Emballage B", sub:"Trieur → Zone B", status:"ok"}
+      },
+      eventLog:[],
+      wmsLog:[],
+      kpi:{completed:0, cycleTimeSum:0}
+    };
+  }
+
+  function catalogItem(sku){
+    for (var i=0;i<CATALOG.length;i++){ if (CATALOG[i].sku===sku) return CATALOG[i]; }
+    return null;
+  }
+  // Politique de slotting : un SKU peut être réparti sur plusieurs emplacements.
+  // Pour une tâche de prélèvement, le WCS choisit l'emplacement qui contient le
+  // SKU en plus grande quantité (limite la fragmentation et le nombre de trajets).
+  function pickBinForOrder(sku, qty){
+    var candidates = state.bins.filter(function(b){ return b.sku===sku && b.qty>=qty; });
+    if (!candidates.length) return null;
+    candidates.sort(function(a,b){ return b.qty-a.qty; });
+    return candidates[0];
+  }
+  function totalStock(sku){
+    return state.bins.filter(function(b){ return b.sku===sku; }).reduce(function(s,b){ return s+b.qty; },0);
+  }
+  function freeBin(){
+    return state.bins.find(function(b){ return !b.sku; }) || null;
+  }
+  function freeLocationsCount(){
+    return state.bins.filter(function(b){ return !b.sku; }).length;
+  }
+  function idleAgv(){
+    if (state.equip.agv1.status==="ok") return state.equip.agv1;
+    if (state.equip.agv2.status==="ok") return state.equip.agv2;
+    return null;
+  }
+  function rand(min,max){ return min + Math.random()*(max-min); }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function fmtTime(ms){
+    var s = Math.floor(ms/1000);
+    var mm = Math.floor(s/60), ss = s%60;
+    return String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0");
+  }
+
+  /* =========================================================
+     LOGGING
+  ========================================================== */
+  function log(msg, cls){
+    state.eventLog.push({t:state.simTime, msg:msg, cls:cls||""});
+    if (state.eventLog.length>300) state.eventLog.shift();
+  }
+  function wmsLog(msg, dir){
+    state.wmsLog.push({t:state.simTime, msg:msg, dir:dir});
+    if (state.wmsLog.length>150) state.wmsLog.shift();
+  }
+
+  /* =========================================================
+     ORDER / DISPATCH LOGIC
+  ========================================================== */
+  function createOrder(){
+    var candidates = state.bins.filter(function(b){ return b.sku; });
+    var b = pick(candidates);
+    var qty = Math.floor(rand(1,4));
+    var order = {
+      id: "CMD-"+state.nextOrderSeq++,
+      sku: b.sku, name:b.name, lane:b.lane, qty:qty,
+      status:"attente", agv:null, createdAt: state.simTime, completedAt:null,
+      stockWarned:false
+    };
+    state.orders.unshift(order);
+    if (state.orders.length>60) state.orders.pop();
+    log("📥 Nouvel ordre reçu du WMS : "+order.id+" — "+qty+"× "+b.sku+" ("+b.name+")", "wms");
+    wmsLog("→ Ordre "+order.id+" ("+qty+"× "+b.sku+")", "in");
+    return order;
+  }
+
+  function dispatch(){
+    for (var i=0;i<state.orders.length;i++){
+      var order = state.orders[i];
+      if (order.status!=="attente") continue;
+      var bin = pickBinForOrder(order.sku, order.qty);
+      if (!bin){
+        if (!order.stockWarned){
+          var total = totalStock(order.sku);
+          if (total<=0){
+            log("⚠️ Rupture de stock pour "+order.id+" (SKU "+order.sku+") — commande en attente", "warn");
+          } else {
+            log("⚠️ Stock fragmenté/insuffisant pour "+order.id+" (SKU "+order.sku+", "+total+" en stock réparti) — commande en attente", "warn");
+          }
+          order.stockWarned = true;
+        }
+        continue;
+      }
+      var agv = idleAgv();
+      if (!agv) continue; // reste en file, aucun chariot dispo
+
+      // Assignation
+      bin.qty -= order.qty;
+      var freedId = null;
+      if (bin.qty<=0){
+        // Emplacement vidé : il redevient disponible pour le slotting dynamique
+        freedId = bin.id;
+        bin.sku = null; bin.name = null; bin.lane = null; bin.qty = 0;
+      }
+      agv.status = "busy";
+      order.status = "cours";
+      order.agv = agv.label;
+
+      var tote = {
+        id:"T"+state.nextToteSeq++,
+        orderId: order.id, lane: order.lane, agv: agv.id,
+        phase:"toEntry", elapsed:0, dur:DUR.toEntry,
+        from:{x:bin.x,y:bin.y}, to:ENTRY,
+        x:bin.x, y:bin.y, opacity:1
+      };
+      state.totes.push(tote);
+      log("🚚 "+agv.label+" prélève "+order.qty+"× "+order.sku+" (bin "+bin.id+") pour "+order.id, "");
+      if (freedId) log("📍 Emplacement "+freedId+" vidé — libéré pour le slotting dynamique", "");
+    }
+    // Chaque prélèvement peut libérer de la place (emplacement vidé, ou simplement
+    // de la marge dans un emplacement partiellement consommé) : on retente donc la
+    // file de réceptions bloquées à chaque cycle plutôt que seulement sur libération totale.
+    if (state.pendingReceipts.length) tryFlushPendingReceipts();
+  }
+
+  /* =========================================================
+     TOTE STATE MACHINE
+  ========================================================== */
+  // Statut des équipements partagés (convoyeurs, trieur) dérivé de la position
+  // réelle des totes en transit — évite les incohérences quand plusieurs totes
+  // se chevauchent sur le même équipement.
+  function derivePassiveStatus(){
+    var busyMap = {convMain:false, sorter:false, convPackA:false, convPackB:false};
+    state.totes.forEach(function(t){
+      if (t.phase==="conveyor") busyMap.convMain = true;
+      if (t.phase==="sort") busyMap.sorter = true;
+      if (t.phase==="toPack") busyMap[t.lane==="A"?"convPackA":"convPackB"] = true;
+    });
+    ["convMain","sorter","convPackA","convPackB"].forEach(function(key){
+      var eq = state.equip[key];
+      if (eq.status!=="error") eq.status = busyMap[key] ? "busy" : "ok";
+    });
+  }
+
+  function advanceTote(tote, dt){
+    // Pause si l'équipement porteur est en panne
+    if (tote.phase==="toEntry" && state.equip[tote.agv].status==="error") return;
+    if (tote.phase==="conveyor" && state.equip.convMain.status==="error") return;
+    if (tote.phase==="sort" && state.equip.sorter.status==="error") return;
+    if (tote.phase==="toPack"){
+      var convId = tote.lane==="A" ? "convPackA" : "convPackB";
+      if (state.equip[convId].status==="error") return;
+    }
+
+    tote.elapsed += dt;
+    var f = Math.min(1, tote.elapsed / tote.dur);
+    tote.x = tote.from.x + (tote.to.x - tote.from.x)*f;
+    tote.y = tote.from.y + (tote.to.y - tote.from.y)*f;
+
+    if (f>=1){
+      nextPhase(tote);
+    }
+  }
+
+  function nextPhase(tote){
+    switch(tote.phase){
+      case "toEntry":
+        state.equip[tote.agv].status = "ok"; // le chariot redevient disponible
+        tote.phase="conveyor"; tote.elapsed=0; tote.dur=DUR.conveyor;
+        tote.from={x:tote.x,y:tote.y}; tote.to=SORTC;
+        break;
+      case "conveyor":
+        tote.phase="sort"; tote.elapsed=0; tote.dur=DUR.sort;
+        tote.from={x:tote.x,y:tote.y}; tote.to={x:tote.x,y:tote.y};
+        break;
+      case "sort":
+        log("🔀 Trieur : "+tote.id+" ("+tote.orderId+") routé vers lane "+tote.lane, "");
+        tote.phase="toPack"; tote.elapsed=0; tote.dur=DUR.toPack;
+        tote.from={x:tote.x,y:tote.y}; tote.to = tote.lane==="A" ? PACKA_C : PACKB_C;
+        break;
+      case "toPack":
+        tote.phase="pack"; tote.elapsed=0; tote.dur=DUR.pack;
+        tote.from={x:tote.x,y:tote.y}; tote.to={x:tote.x,y:tote.y};
+        break;
+      case "pack":
+        log("📦 Colis emballé (zone "+tote.lane+") pour "+tote.orderId, "");
+        tote.phase="toShip"; tote.elapsed=0; tote.dur=DUR.toShip;
+        tote.from={x:tote.x,y:tote.y}; tote.to=SHIPC;
+        break;
+      case "toShip":
+        completeOrder(tote);
+        tote.phase="done"; tote.elapsed=0; tote.dur=1;
+        break;
+    }
+  }
+
+  function completeOrder(tote){
+    var order = state.orders.find(function(o){ return o.id===tote.orderId; });
+    if (order){
+      order.status="expediee";
+      order.completedAt = state.simTime;
+      state.kpi.completed++;
+      state.kpi.cycleTimeSum += (order.completedAt - order.createdAt);
+      log("✅ "+order.id+" expédiée avec succès", "good");
+      wmsLog("← Confirmation d'expédition "+order.id+" envoyée au WMS", "out");
+    }
+  }
+
+  /* =========================================================
+     FAULTS
+  ========================================================== */
+  function triggerFault(){
+    var keys = Object.keys(state.equip).filter(function(k){ return state.equip[k].status!=="error"; });
+    if (!keys.length) return;
+    var key = pick(keys);
+    var eq = state.equip[key];
+    var wasBusy = eq.status;
+    eq.status = "error";
+    var dur = rand(FAULT_MIN, FAULT_MAX);
+    eq._recoverAt = state.simTime + dur;
+    log("⛔ Panne déclenchée sur "+eq.label+" — tâches concernées en attente", "crit");
+  }
+
+  function repairEquipment(key){
+    var eq = state.equip[key];
+    if (!eq || eq.status!=="error") return;
+    eq.status="ok";
+    delete eq._recoverAt;
+    log("🔧 "+eq.label+" remis en service manuellement", "good");
+  }
+
+  function checkAutoRecovery(){
+    Object.keys(state.equip).forEach(function(key){
+      var eq = state.equip[key];
+      if (eq.status==="error" && eq._recoverAt!=null && state.simTime>=eq._recoverAt){
+        eq.status="ok";
+        delete eq._recoverAt;
+        log("✅ "+eq.label+" réparé automatiquement, reprise du service", "good");
+      }
+    });
+  }
+
+  /* =========================================================
+     RÉCEPTION / SLOTTING DYNAMIQUE
+  ========================================================== */
+  // Tente de placer `qty` unités d'un produit : d'abord dans ses emplacements
+  // existants (consolidation), puis — s'il n'y a plus de place — dans un
+  // emplacement libre quelconque (slotting dynamique). Retourne le reliquat
+  // qui n'a pas pu être placé (0 si tout a été rangé).
+  function placeStock(product, qty, moveLog){
+    var remaining = qty;
+    var existing = state.bins.filter(function(b){ return b.sku===product.sku && b.qty<b.cap; });
+    existing.sort(function(a,b){ return b.qty-a.qty; }); // remplit d'abord les emplacements déjà les plus pleins
+    existing.forEach(function(b){
+      if (remaining<=0) return;
+      var space = b.cap-b.qty;
+      var put = Math.min(space, remaining);
+      b.qty += put; remaining -= put;
+      flashBin(b.id);
+      if (moveLog) moveLog.push(put+"× → "+b.id+" (existant)");
+    });
+    while (remaining>0){
+      var fb = freeBin();
+      if (!fb) break; // plus aucun emplacement libre : entrepôt saturé
+      fb.sku = product.sku; fb.name = product.name; fb.lane = product.lane;
+      var put = Math.min(fb.cap, remaining);
+      fb.qty = put; remaining -= put;
+      flashBin(fb.id);
+      if (moveLog) moveLog.push(put+"× → "+fb.id+" (nouvel emplacement, slotting dynamique)");
+    }
+    return remaining;
+  }
+
+  function restock(){
+    var product = pick(CATALOG);
+    var add = Math.floor(rand(8,18));
+    var moveLog = [];
+    var remaining = placeStock(product, add, moveLog);
+    var placed = add-remaining;
+
+    if (placed>0){
+      log("📦 Réception fournisseur : +"+placed+" "+product.sku+" ("+product.name+") — "+moveLog.join(", "), "wms");
+      wmsLog("→ Avis de réception fournisseur : "+product.sku+" (+"+placed+")", "in");
+    }
+    if (remaining>0){
+      state.pendingReceipts.push({sku:product.sku, name:product.name, lane:product.lane, qty:remaining, at:state.simTime});
+      log("⛔ Réception refusée pour "+remaining+"× "+product.sku+" — entrepôt saturé, aucun emplacement libre. Mise en attente.", "crit");
+    }
+  }
+
+  // Relance la file de réceptions bloquées (à appeler après un compactage ou
+  // dès qu'un emplacement se libère) : tente de replacer chaque réception en
+  // attente, dans l'ordre d'arrivée (FIFO).
+  function tryFlushPendingReceipts(){
+    if (!state.pendingReceipts.length) return;
+    var next = [];
+    state.pendingReceipts.forEach(function(item){
+      var product = catalogItem(item.sku) || {sku:item.sku, name:item.name, lane:item.lane};
+      var moveLog = [];
+      var remaining = placeStock(product, item.qty, moveLog);
+      var placed = item.qty-remaining;
+      if (placed>0){
+        log("✅ Réception en attente traitée : +"+placed+" "+item.sku+" ("+item.name+") — "+moveLog.join(", "), "good");
+      }
+      if (remaining>0){
+        next.push({sku:item.sku, name:item.name, lane:item.lane, qty:remaining, at:item.at});
+      }
+    });
+    state.pendingReceipts = next;
+  }
+
+  /* =========================================================
+     RÉORGANISATION / COMPACTAGE (déclenché manuellement)
+  ========================================================== */
+  // Consolide les stocks d'un même SKU fragmentés sur plusieurs emplacements
+  // afin d'en libérer le plus possible — une action classique d'optimisation
+  // de slotting dans un vrai WCS/WES.
+  function compactWarehouse(){
+    var moves = 0, freed = 0;
+    var skus = [];
+    state.bins.forEach(function(b){ if (b.sku && skus.indexOf(b.sku)===-1) skus.push(b.sku); });
+    var fragmentedSkus = skus.filter(function(sku){
+      return state.bins.filter(function(b){ return b.sku===sku; }).length>1;
+    });
+
+    skus.forEach(function(sku){
+      var group = state.bins.filter(function(b){ return b.sku===sku; }).sort(function(a,b){ return b.qty-a.qty; });
+      for (var i=group.length-1; i>0; i--){
+        var src = group[i];
+        for (var j=0; j<i && src.qty>0; j++){
+          var dst = group[j];
+          if (dst.qty>=dst.cap) continue;
+          var space = dst.cap-dst.qty;
+          var move = Math.min(space, src.qty);
+          if (move>0){
+            dst.qty += move; src.qty -= move;
+            moves++;
+            flashBin(dst.id); flashBin(src.id);
+            log("🧹 Compactage : "+move+"× "+sku+" déplacé de "+src.id+" vers "+dst.id, "");
+          }
+        }
+        if (src.qty<=0){
+          log("📍 Emplacement "+src.id+" libéré (compactage)", "good");
+          src.sku=null; src.name=null; src.lane=null; src.qty=0;
+          freed++;
+        }
+      }
+    });
+
+    if (moves===0){
+      if (fragmentedSkus.length===0){
+        log("🧹 Compactage : le stock est déjà consolidé, rien à optimiser", "");
+      } else {
+        log("🧹 Compactage : "+fragmentedSkus.length+" SKU fragmenté(s), mais aucun emplacement n'a de marge pour consolider — la capacité est déjà pleinement utilisée. Il faut attendre des expéditions pour libérer de la place.", "warn");
+      }
+    } else { log("🧹 Compactage terminé : "+moves+" mouvement(s), "+freed+" emplacement(s) libéré(s)", "good"); }
+
+    tryFlushPendingReceipts();
+  }
+
+  // Compteur de "rendus restants" plutôt que d'horodatage simulé : reste correct
+  // même si la simulation est en pause (chaque clic déclenche quand même un rendu).
+  var flashSet = {};
+  function flashBin(id){ flashSet[id]=8; }
+  function decayFlashes(){
+    Object.keys(flashSet).forEach(function(id){
+      flashSet[id]--;
+      if (flashSet[id]<=0) delete flashSet[id];
+    });
+  }
+
+  /* =========================================================
+     MAIN LOOP
+  ========================================================== */
+  // Boucle de simulation pilotée par setInterval (indépendante du taux de
+  // rafraîchissement écran) pour un comportement déterministe selon la vitesse choisie.
+  var tickHandle = null;
+  function startTicker(){
+    if (tickHandle) return;
+    tickHandle = setInterval(function(){
+      if (!state.running) return;
+      var dt = TICK_MS * state.speed;
+      state.simTime += dt;
+      checkAutoRecovery();
+      dispatch();
+      state.totes.forEach(function(t){ if (t.phase!=="done") advanceTote(t, dt); });
+      state.totes = state.totes.filter(function(t){ return t.phase!=="done"; });
+      derivePassiveStatus();
+      if (state.autoGen && state.simTime >= state.nextAutoAt){
+        createOrder();
+        state.nextAutoAt = state.simTime + rand(AUTO_MIN, AUTO_MAX);
+      }
+      render();
+    }, TICK_MS);
+  }
+  function stopTicker(){ if (tickHandle){ clearInterval(tickHandle); tickHandle=null; } }
+
+  /* =========================================================
+     RENDERING
+  ========================================================== */
+  var el = {};
+  function cacheDom(){
+    ["kpiRow","mapWrap","conveyorSvg","binGrid","binsHint","eqList","taskBody","taskHint",
+     "eventLog","wmsLog","runPill","btnPlayPause","speedGrp","btnReset","btnNewOrder",
+     "btnRestock","chkAuto","btnFault",
+     "satPct","satBar","satStatusPill","satStatusText","satFree","satPendingFlag","satPendingText",
+     "btnCompact","btnFlushPending"].forEach(function(id){ el[id]=document.getElementById(id); });
+  }
+
+  function buildStaticMap(){
+    // zones
+    Object.keys(ZONES).forEach(function(key){
+      var z = ZONES[key];
+      var div = document.createElement("div");
+      div.className = "zone "+z.cls;
+      div.style.left=z.x+"%"; div.style.top=z.y+"%"; div.style.width=z.w+"%"; div.style.height=z.h+"%";
+      var lab = document.createElement("div");
+      lab.className="zlabel"; lab.textContent=z.label;
+      div.appendChild(lab);
+      el.mapWrap.appendChild(div);
+    });
+    // entry point marker
+    var p = document.createElement("div");
+    p.className="point"; p.style.left=ENTRY.x+"%"; p.style.top=ENTRY.y+"%";
+    el.mapWrap.appendChild(p);
+
+    // conveyor lines (svg)
+    var ns = "http://www.w3.org/2000/svg";
+    CONV_LINES.forEach(function(c){
+      var line = document.createElementNS(ns,"line");
+      line.setAttribute("x1",c.p1.x); line.setAttribute("y1",c.p1.y);
+      line.setAttribute("x2",c.p2.x); line.setAttribute("y2",c.p2.y);
+      line.setAttribute("stroke","#c3c2b7");
+      line.setAttribute("stroke-width","1.4");
+      line.setAttribute("stroke-dasharray","2.2,1.6");
+      line.setAttribute("id","line_"+c.id);
+      el.conveyorSvg.appendChild(line);
+    });
+
+    // bins
+    var bw = STORAGE_BINS.w/BIN_COLS, bh = STORAGE_BINS.h/BIN_ROWS;
+    state.bins.forEach(function(b){
+      var div = document.createElement("div");
+      div.className="bin"; div.id="binmap_"+b.id;
+      div.style.left=(b.x-bw/2+0.4)+"%"; div.style.top=(b.y-bh/2+0.4)+"%";
+      div.style.width=(bw-0.8)+"%"; div.style.height=(bh-0.8)+"%";
+      div.textContent = b.sku ? b.id : "";
+      el.mapWrap.appendChild(div);
+    });
+  }
+
+  function renderKpis(){
+    var enAttente = state.orders.filter(function(o){return o.status==="attente";}).length;
+    var enCours = state.orders.filter(function(o){return o.status==="cours";}).length;
+    var completed = state.kpi.completed;
+    var avgCycle = completed>0 ? (state.kpi.cycleTimeSum/completed/1000).toFixed(1) : "—";
+    var busyCount = Object.keys(state.equip).filter(function(k){return state.equip[k].status==="busy";}).length;
+    var errorCount = Object.keys(state.equip).filter(function(k){return state.equip[k].status==="error";}).length;
+    var util = Math.round(busyCount/6*100);
+
+    var tiles = [
+      {label:"En attente", value:enAttente},
+      {label:"En cours", value:enCours},
+      {label:"Expédiées", value:completed},
+      {label:"Cycle moyen (s)", value:avgCycle},
+      {label:"Alertes équipement", value:errorCount, alert:errorCount>0}
+    ];
+    el.kpiRow.innerHTML = tiles.map(function(t){
+      return '<div class="kpi"><div class="label">'+t.label+'</div><div class="value'+(t.alert?' alert':'')+'">'+t.value+'</div></div>';
+    }).join("");
+  }
+
+  function binClass(b){
+    if (!b.sku) return "";
+    if (b.qty<=0) return "empty0";
+    if (b.qty/b.cap < 0.25) return "low";
+    return "stocked";
+  }
+
+  function renderBins(){
+    var lowCount = state.bins.filter(function(b){return b.sku && b.qty>0 && b.qty/b.cap<0.25;}).length;
+    var outCount = state.bins.filter(function(b){return b.sku && b.qty<=0;}).length;
+    var freeCount = freeLocationsCount();
+    el.binsHint.textContent = (lowCount+outCount)>0 ? (outCount+" en rupture, "+lowCount+" stock faible, "+freeCount+" libre(s)") : (freeCount+" emplacement(s) libre(s)");
+
+    el.binGrid.innerHTML = state.bins.map(function(b){
+      var flashed = !!flashSet[b.id];
+      if (!b.sku){
+        return '<div class="bin-card libre'+(flashed?' freed':'')+'">'+b.id+' · Libre</div>';
+      }
+      var pct = Math.round(b.qty/b.cap*100);
+      var barCls = b.qty<=0 ? "crit" : (b.qty/b.cap<0.25 ? "warn":"");
+      return '<div class="bin-card'+(b.qty<=0?' empty':'')+'">'+
+        '<div class="sku">'+b.sku+'</div>'+
+        '<div class="ref">'+b.name+' · '+b.id+'</div>'+
+        '<div class="bar '+barCls+'"><span style="width:'+pct+'%"></span></div>'+
+        '<div class="qty"><span>'+b.qty+' / '+b.cap+'</span><span>'+(b.qty<=0?'⛔ Rupture':(b.qty/b.cap<0.25?'⚠ Faible':'✓ OK'))+'</span></div>'+
+      '</div>';
+    }).join("");
+
+    // map bin coloring + label + flash
+    state.bins.forEach(function(b){
+      var node = document.getElementById("binmap_"+b.id);
+      if (!node) return;
+      node.className = "bin "+binClass(b);
+      node.textContent = b.sku ? b.id : "";
+      if (flashSet[b.id]){
+        node.style.boxShadow = "0 0 0 2px "+"#0ca30c";
+      } else {
+        node.style.boxShadow = "";
+      }
+    });
+  }
+
+  function renderSaturation(){
+    var totalCap = BIN_COUNT*PER_BIN_CAP;
+    var totalQty = state.bins.reduce(function(s,b){ return s+b.qty; },0);
+    var pct = Math.round(totalQty/totalCap*100);
+    var freeCount = freeLocationsCount();
+    var pendingQty = state.pendingReceipts.reduce(function(s,i){ return s+i.qty; },0);
+
+    el.satPct.textContent = pct+"%";
+    el.satBar.style.width = Math.min(100,pct)+"%";
+    el.satFree.textContent = freeCount+" / "+BIN_COUNT;
+
+    var level, text, barColor;
+    if (state.pendingReceipts.length){
+      level="crit"; text="⛔ Réceptions bloquées — aucun emplacement libre"; barColor="var(--critical)";
+    } else if (pct>=90){
+      level="crit"; text="🔴 Entrepôt quasi saturé"; barColor="var(--critical)";
+    } else if (pct>=70){
+      level="warn"; text="🟠 Tension sur les emplacements"; barColor="var(--warning)";
+    } else {
+      level="run"; text="🟢 Capacité disponible"; barColor="var(--good)";
+    }
+    el.satStatusPill.className = "pill "+level;
+    el.satStatusText.textContent = text;
+    el.satBar.style.background = barColor;
+    el.satPct.style.color = level==="crit" ? "var(--critical)" : (level==="warn" ? "#8a6100" : "var(--ink-1)");
+
+    if (state.pendingReceipts.length){
+      el.satPendingFlag.classList.add("show");
+      el.satPendingText.textContent = state.pendingReceipts.length+" réception(s) en attente ("+pendingQty+" unités)";
+      el.btnFlushPending.style.display = "";
+    } else {
+      el.satPendingFlag.classList.remove("show");
+      el.btnFlushPending.style.display = "none";
+    }
+  }
+
+  function statusLabel(s){
+    if (s==="ok") return {cls:"ok", text:"● Disponible"};
+    if (s==="busy") return {cls:"busy", text:"● En service"};
+    return {cls:"error", text:"● En panne"};
+  }
+
+  function renderEquipment(){
+    var html = "";
+    Object.keys(state.equip).forEach(function(key){
+      var eq = state.equip[key];
+      var s = statusLabel(eq.status);
+      html += '<div class="eq-card">'+
+        '<div class="who"><div><div class="eq-name">'+eq.label+'</div><div class="eq-sub">'+eq.sub+'</div></div></div>'+
+        '<div style="display:flex;align-items:center;gap:6px;">'+
+        '<span class="status-badge '+s.cls+'">'+s.text+'</span>'+
+        (eq.status==="error" ? '<button class="btn small" data-repair="'+key+'">Réparer</button>' : '')+
+        '</div></div>';
+    });
+    el.eqList.innerHTML = html;
+  }
+
+  function renderTasks(){
+    var visible = state.orders.slice(0,25);
+    el.taskHint.textContent = state.orders.length+" commande(s) au total";
+    el.taskBody.innerHTML = visible.map(function(o){
+      var tagCls = o.status==="attente"?"attente":(o.status==="cours"?"cours":"expediee");
+      var tagTxt = o.status==="attente"?"En attente":(o.status==="cours"?"En cours":"Expédiée");
+      return '<tr><td>'+o.id+'</td><td>'+o.sku+'</td><td>'+o.qty+'</td>'+
+        '<td><span class="tag lane'+o.lane+'">Lane '+o.lane+'</span></td>'+
+        '<td><span class="tag '+tagCls+'">'+tagTxt+'</span></td>'+
+        '<td>'+(o.agv||'—')+'</td></tr>';
+    }).join("");
+  }
+
+  function renderLogs(){
+    el.eventLog.innerHTML = state.eventLog.slice(-120).map(function(e){
+      return '<div class="entry '+e.cls+'"><span class="t">['+fmtTime(e.t)+']</span>'+e.msg+'</div>';
+    }).join("");
+    el.wmsLog.innerHTML = state.wmsLog.slice(-60).map(function(e){
+      return '<div class="entry wms"><span class="t">['+fmtTime(e.t)+']</span>'+e.msg+'</div>';
+    }).join("");
+  }
+
+  function renderTotes(){
+    var existing = {};
+    el.mapWrap.querySelectorAll(".tote").forEach(function(n){ existing[n.dataset.id]=n; });
+    var seen = {};
+    state.totes.forEach(function(t){
+      seen[t.id]=true;
+      var node = existing[t.id];
+      if (!node){
+        node = document.createElement("div");
+        node.className = "tote lane"+t.lane;
+        node.dataset.id = t.id;
+        node.title = t.orderId;
+        el.mapWrap.appendChild(node);
+      }
+      node.style.left = t.x+"%";
+      node.style.top = t.y+"%";
+    });
+    Object.keys(existing).forEach(function(id){ if (!seen[id]) existing[id].remove(); });
+  }
+
+  function render(){
+    decayFlashes();
+    renderKpis();
+    renderBins();
+    renderSaturation();
+    renderEquipment();
+    renderTasks();
+    renderLogs();
+    renderTotes();
+  }
+
+  /* =========================================================
+     EVENTS / UI
+  ========================================================== */
+  function wireEvents(){
+    el.btnPlayPause.addEventListener("click", function(){
+      state.running = !state.running;
+      el.btnPlayPause.textContent = state.running ? "⏸ Pause" : "▶ Reprendre";
+      el.runPill.className = "pill "+(state.running?"run":"pause");
+      el.runPill.innerHTML = '<span class="dot"></span>'+(state.running?"Simulation active":"En pause");
+    });
+    el.speedGrp.querySelectorAll("button").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        state.speed = parseFloat(btn.dataset.speed);
+        el.speedGrp.querySelectorAll("button").forEach(function(b){ b.classList.remove("active"); });
+        btn.classList.add("active");
+      });
+    });
+    el.btnReset.addEventListener("click", function(){
+      stopTicker();
+      state = freshState();
+      el.mapWrap.querySelectorAll(".zone,.point,.bin,.tote").forEach(function(n){ n.remove(); });
+      while (el.conveyorSvg.firstChild) el.conveyorSvg.removeChild(el.conveyorSvg.firstChild);
+      buildStaticMap();
+      el.btnPlayPause.textContent = "⏸ Pause";
+      el.runPill.className="pill run"; el.runPill.innerHTML='<span class="dot"></span>Simulation active';
+      el.speedGrp.querySelectorAll("button").forEach(function(b){ b.classList.toggle("active", b.dataset.speed==="1"); });
+      el.chkAuto.checked = false;
+      startTicker();
+      render();
+    });
+    el.btnNewOrder.addEventListener("click", function(){ createOrder(); render(); });
+    el.btnRestock.addEventListener("click", function(){ restock(); render(); });
+    el.btnFault.addEventListener("click", function(){ triggerFault(); render(); });
+    el.btnCompact.addEventListener("click", function(){ compactWarehouse(); render(); });
+    el.btnFlushPending.addEventListener("click", function(){
+      var before = state.pendingReceipts.length;
+      tryFlushPendingReceipts();
+      if (state.pendingReceipts.length===before){
+        log("⏳ Toujours "+before+" réception(s) en attente — libérez de la place (compactage) pour les traiter", "warn");
+      }
+      render();
+    });
+    el.chkAuto.addEventListener("change", function(){
+      state.autoGen = el.chkAuto.checked;
+      if (state.autoGen) state.nextAutoAt = state.simTime + rand(AUTO_MIN,AUTO_MAX);
+    });
+    el.eqList.addEventListener("click", function(e){
+      var btn = e.target.closest("[data-repair]");
+      if (btn){ repairEquipment(btn.dataset.repair); render(); }
+    });
+  }
+
+  /* =========================================================
+     BOOT
+  ========================================================== */
+  function boot(){
+    cacheDom();
+    state = freshState();
+    buildStaticMap();
+    wireEvents();
+    // amorce : une première commande pour que la démo ne soit pas vide
+    createOrder();
+    startTicker();
+    render();
+  }
+
+  document.addEventListener("DOMContentLoaded", boot);
+})();
+</script>
+<a href="../index.html" style="position:fixed;left:12px;bottom:12px;z-index:99999;padding:7px 12px;border-radius:8px;background:rgba(20,24,30,.82);color:#fff;font:600 13px system-ui,sans-serif;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.25)">&larr; Versions</a>
+</body>
+</html>
