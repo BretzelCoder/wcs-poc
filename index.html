@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PoC WCS — Versions</title>
+<meta name="description" content="PoC Warehouse Control System : historique des versions de la démo interactive.">
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1b1f24; --muted:#5b6470; --line:#e2e5ea;
+    --accent:#1f6feb; --accent-ink:#ffffff; --tag:#eef3fd; --tag-ink:#1f4fa8; --new:#0f7b4a; --new-bg:#e6f5ee;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f1216; --card:#171b21; --ink:#e7eaee; --muted:#9aa4b1; --line:#2a313a;
+      --accent:#4c8dff; --accent-ink:#0b0e12; --tag:#1c2a43; --tag-ink:#a9c4ff; --new:#5fd39a; --new-bg:#12291f;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:880px;margin:0 auto;padding:48px 16px 64px}
+  header h1{font-size:clamp(26px,4vw,34px);line-height:1.2;margin:0 0 8px;letter-spacing:-.01em}
+  header p{margin:0;color:var(--muted);max-width:62ch}
+  .cta{display:inline-flex;align-items:center;gap:8px;margin-top:22px;padding:11px 18px;border-radius:10px;
+       background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:600}
+  .cta:hover{filter:brightness(1.08)}
+  h2{font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:44px 0 14px;font-weight:600}
+  ol{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+  li a{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;
+       color:inherit;text-decoration:none;transition:border-color .15s, transform .15s}
+  li a:hover{border-color:var(--accent);transform:translateY(-1px)}
+  li.latest a{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .top{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px}
+  .ver{font-weight:700;font-size:18px}
+  .title{font-weight:600}
+  .date{margin-left:auto;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+  .badge{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--new-bg);color:var(--new)}
+  .desc{margin:10px 0 0;color:var(--muted)}
+  ul.feat{margin:10px 0 0;padding-left:18px;color:var(--ink)}
+  ul.feat li{margin:3px 0}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .tag{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--tag);color:var(--tag-ink)}
+  footer{margin-top:48px;color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:18px}
+  @media (max-width:560px){ .date{margin-left:0;width:100%} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>PoC — Warehouse Control System (WCS)</h1>
+    <p>Démo interactive d'un WCS : dispatching des commandes reçues du WMS, simulation d'AGV, de convoyeurs et d'un trieur, gestion des emplacements de stockage (bins) et interface WMS ↔ WCS simulée.</p>
+    <a class="cta" href="versions/v4.html">▶ Ouvrir la version la plus récente (v4)</a>
+  </header>
+
+  <h2>Historique des versions</h2>
+  <ol>
+    <li class="latest">
+      <a href="versions/v4.html">
+        <div class="top"><span class="ver">v4</span><span class="title">Commande urgente ciblée</span><span class="badge">Version par défaut</span><span class="date">Créée le 13/08/2026 à 14:03</span></div>
+        <p class="desc">Le WCS sait réagir aux ruptures qui bloquent des commandes, au lieu d'attendre une réception fournisseur aléatoire.</p>
+        <ul class="feat">
+          <li>Bouton « 🚨 Lancer la commande urgente » : réapprovisionnement ciblé sur les références en rupture, actif uniquement s'il y a quelque chose à commander.</li>
+          <li>Option « Inclure aussi les références en stock faible » (seuil au niveau SKU, tous emplacements confondus).</li>
+          <li>Détection de rupture au niveau catalogue, même après libération du dernier emplacement par le slotting dynamique.</li>
+          <li>Réceptions urgentes prioritaires dans la file d'attente ; raison de blocage affichée sur les commandes (stock, AGV indisponible…).</li>
+        </ul>
+        <div class="tags"><span class="tag">Réapprovisionnement</span><span class="tag">Ruptures</span><span class="tag">Priorisation</span></div>
+      </a>
+    </li>
+    <li>
+      <a href="versions/v3.html">
+        <div class="top"><span class="ver">v3</span><span class="title">Déblocage explicite des réceptions</span><span class="date">Créée le 13/08/2026 à 12:13</span></div>
+        <p class="desc">Correctif de comportement : une réception bloquée n'est plus relancée automatiquement à chaque cycle.</p>
+        <ul class="feat">
+          <li>Comme dans un vrai WCS, un flux en anomalie ne se résout pas seul : il faut compacter le stock ou cliquer sur « Relancer les réceptions en attente ».</li>
+          <li>Message d'alerte dans le journal quand un emplacement se libère alors que des réceptions sont en attente.</li>
+        </ul>
+        <div class="tags"><span class="tag">Gestion d'anomalies</span><span class="tag">Réalisme opérationnel</span></div>
+      </a>
+    </li>
+    <li>
+      <a href="versions/v2.html">
+        <div class="top"><span class="ver">v2</span><span class="title">Saturation &amp; slotting dynamique</span><span class="date">Créée le 13/08/2026 à 12:05</span></div>
+        <p class="desc">Introduction de la capacité physique des emplacements et de la saturation de l'entrepôt.</p>
+        <ul class="feat">
+          <li>Panneau « Saturation de l'entrepôt ».</li>
+          <li>Slotting dynamique : un SKU peut être réparti sur plusieurs emplacements ; un emplacement vidé accueille n'importe quel SKU ; prélèvement sur l'emplacement le plus rempli.</li>
+          <li>Réceptions refusées et mises en file (FIFO) quand l'entrepôt est saturé.</li>
+          <li>Boutons « 🧹 Réorganiser / Compacter le stock » et « ▶ Relancer les réceptions en attente ».</li>
+        </ul>
+        <div class="tags"><span class="tag">Capacité</span><span class="tag">Slotting</span><span class="tag">Compactage</span></div>
+      </a>
+    </li>
+    <li>
+      <a href="versions/v1.html">
+        <div class="top"><span class="ver">v1</span><span class="title">Version initiale</span><span class="date">Créée le 13/08/2026 à 09:09</span></div>
+        <p class="desc">Le socle de la démo : un entrepôt simulé piloté par le WCS.</p>
+        <ul class="feat">
+          <li>Plan de l'entrepôt animé, équipements (AGV, convoyeurs, trieur), file des commandes / tâches et journal d'événements.</li>
+          <li>Stocks par emplacement (bins) et interface WMS ↔ WCS simulée.</li>
+          <li>Pilotage : pause, vitesse 1×/2×/4×, réinitialisation, génération automatique de commandes, nouvelle commande (push WMS), réception fournisseur, panne / réparation d'équipement.</li>
+        </ul>
+        <div class="tags"><span class="tag">Dispatching</span><span class="tag">Simulation</span><span class="tag">Interface WMS</span></div>
+      </a>
+    </li>
+  </ol>
+
+  <footer>Chaque version s'ouvre en plein écran ; le bouton « ← Versions » en bas à gauche ramène à cette page. Heures exprimées en heure de Paris.</footer>
+</div>
+</body>
+</html>
