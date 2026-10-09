@@ -18,7 +18,11 @@
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-  .wrap{max-width:880px;margin:0 auto;padding:48px 16px 64px}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 16px 64px}
+  .lang{display:flex;justify-content:flex-end;margin-bottom:18px}
+  .lang div{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .lang button{font:inherit;font-size:13px;font-weight:700;padding:6px 12px;border:none;background:var(--card);color:var(--muted);cursor:pointer}
+  .lang button.active{background:var(--accent);color:var(--accent-ink)}
   header h1{font-size:clamp(26px,4vw,34px);line-height:1.2;margin:0 0 8px;letter-spacing:-.01em}
   header p{margin:0;color:var(--muted);max-width:62ch}
   .cta{display:inline-flex;align-items:center;gap:8px;margin-top:22px;padding:11px 18px;border-radius:10px;
@@ -46,66 +50,146 @@
 </head>
 <body>
 <div class="wrap">
+  <div class="lang"><div id="langGrp" role="group" aria-label="Langue / Language"><button data-lang="fr" class="active">FR</button><button data-lang="en">EN</button></div></div>
   <header>
     <h1>PoC — Warehouse Control System (WCS)</h1>
-    <p>Démo interactive d'un WCS : dispatching des commandes reçues du WMS, simulation d'AGV, de convoyeurs et d'un trieur, gestion des emplacements de stockage (bins) et interface WMS ↔ WCS simulée.</p>
-    <a class="cta" href="versions/v4.html">▶ Ouvrir la version la plus récente (v4)</a>
+    <p data-i18n="intro">Démo interactive d'un WCS : dispatching des commandes reçues du WMS, simulation d'AGV, de convoyeurs et d'un trieur, gestion des emplacements de stockage (bins) et interface WMS ↔ WCS simulée.</p>
+    <a class="cta" href="versions/v5.html" data-i18n="cta">▶ Ouvrir la version la plus récente (v5)</a>
   </header>
 
-  <h2>Historique des versions</h2>
+  <h2 data-i18n="history">Historique des versions</h2>
   <ol>
     <li class="latest">
-      <a href="versions/v4.html">
-        <div class="top"><span class="ver">v4</span><span class="title">Commande urgente ciblée</span><span class="badge">Version par défaut</span><span class="date">Créée le 13/08/2026 à 14:03</span></div>
-        <p class="desc">Le WCS sait réagir aux ruptures qui bloquent des commandes, au lieu d'attendre une réception fournisseur aléatoire.</p>
+      <a href="versions/v5.html">
+        <div class="top"><span class="ver">v5</span><span class="title" data-i18n="v5.title">Français / Anglais</span><span class="badge" data-i18n="badge">Version par défaut</span><span class="date" data-i18n="created" data-d="09/10/2026" data-h="07:36">Créée le 09/10/2026 à 07:36</span></div>
+        <p class="desc" data-i18n="v5.desc">La démo est désormais bilingue, avec le français comme langue par défaut.</p>
         <ul class="feat">
-          <li>Bouton « 🚨 Lancer la commande urgente » : réapprovisionnement ciblé sur les références en rupture, actif uniquement s'il y a quelque chose à commander.</li>
-          <li>Option « Inclure aussi les références en stock faible » (seuil au niveau SKU, tous emplacements confondus).</li>
-          <li>Détection de rupture au niveau catalogue, même après libération du dernier emplacement par le slotting dynamique.</li>
-          <li>Réceptions urgentes prioritaires dans la file d'attente ; raison de blocage affichée sur les commandes (stock, AGV indisponible…).</li>
+          <li data-i18n="v5.f1">Sélecteur FR / EN dans l'en-tête de la démo et sur cette page ; le choix est mémorisé dans le navigateur.</li>
+          <li data-i18n="v5.f2">Interface, légende, indicateurs, noms de produits et messages du journal traduits.</li>
+          <li data-i18n="v5.f3">Le journal d'événements est retraduit à la volée quand on change de langue, historique compris.</li>
         </ul>
-        <div class="tags"><span class="tag">Réapprovisionnement</span><span class="tag">Ruptures</span><span class="tag">Priorisation</span></div>
+        <div class="tags"><span class="tag" data-i18n="v5.t1">Internationalisation</span><span class="tag" data-i18n="v5.t2">Français</span><span class="tag" data-i18n="v5.t3">Anglais</span></div>
+      </a>
+    </li>
+    <li>
+      <a href="versions/v4.html">
+        <div class="top"><span class="ver">v4</span><span class="title" data-i18n="v4.title">Commande urgente ciblée</span><span class="date" data-i18n="created" data-d="13/08/2026" data-h="14:03">Créée le 13/08/2026 à 14:03</span></div>
+        <p class="desc" data-i18n="v4.desc">Le WCS sait réagir aux ruptures qui bloquent des commandes, au lieu d'attendre une réception fournisseur aléatoire.</p>
+        <ul class="feat">
+          <li data-i18n="v4.f1">Bouton « 🚨 Lancer la commande urgente » : réapprovisionnement ciblé sur les références en rupture, actif uniquement s'il y a quelque chose à commander.</li>
+          <li data-i18n="v4.f2">Option « Inclure aussi les références en stock faible » (seuil au niveau SKU, tous emplacements confondus).</li>
+          <li data-i18n="v4.f3">Détection de rupture au niveau catalogue, même après libération du dernier emplacement par le slotting dynamique.</li>
+          <li data-i18n="v4.f4">Réceptions urgentes prioritaires dans la file d'attente ; raison de blocage affichée sur les commandes (stock, AGV indisponible…).</li>
+        </ul>
+        <div class="tags"><span class="tag" data-i18n="v4.t1">Réapprovisionnement</span><span class="tag" data-i18n="v4.t2">Ruptures</span><span class="tag" data-i18n="v4.t3">Priorisation</span></div>
       </a>
     </li>
     <li>
       <a href="versions/v3.html">
-        <div class="top"><span class="ver">v3</span><span class="title">Déblocage explicite des réceptions</span><span class="date">Créée le 13/08/2026 à 12:13</span></div>
-        <p class="desc">Correctif de comportement : une réception bloquée n'est plus relancée automatiquement à chaque cycle.</p>
+        <div class="top"><span class="ver">v3</span><span class="title" data-i18n="v3.title">Déblocage explicite des réceptions</span><span class="date" data-i18n="created" data-d="13/08/2026" data-h="12:13">Créée le 13/08/2026 à 12:13</span></div>
+        <p class="desc" data-i18n="v3.desc">Correctif de comportement : une réception bloquée n'est plus relancée automatiquement à chaque cycle.</p>
         <ul class="feat">
-          <li>Comme dans un vrai WCS, un flux en anomalie ne se résout pas seul : il faut compacter le stock ou cliquer sur « Relancer les réceptions en attente ».</li>
-          <li>Message d'alerte dans le journal quand un emplacement se libère alors que des réceptions sont en attente.</li>
+          <li data-i18n="v3.f1">Comme dans un vrai WCS, un flux en anomalie ne se résout pas seul : il faut compacter le stock ou cliquer sur « Relancer les réceptions en attente ».</li>
+          <li data-i18n="v3.f2">Message d'alerte dans le journal quand un emplacement se libère alors que des réceptions sont en attente.</li>
         </ul>
-        <div class="tags"><span class="tag">Gestion d'anomalies</span><span class="tag">Réalisme opérationnel</span></div>
+        <div class="tags"><span class="tag" data-i18n="v3.t1">Gestion d'anomalies</span><span class="tag" data-i18n="v3.t2">Réalisme opérationnel</span></div>
       </a>
     </li>
     <li>
       <a href="versions/v2.html">
-        <div class="top"><span class="ver">v2</span><span class="title">Saturation &amp; slotting dynamique</span><span class="date">Créée le 13/08/2026 à 12:05</span></div>
-        <p class="desc">Introduction de la capacité physique des emplacements et de la saturation de l'entrepôt.</p>
+        <div class="top"><span class="ver">v2</span><span class="title" data-i18n="v2.title">Saturation &amp; slotting dynamique</span><span class="date" data-i18n="created" data-d="13/08/2026" data-h="12:05">Créée le 13/08/2026 à 12:05</span></div>
+        <p class="desc" data-i18n="v2.desc">Introduction de la capacité physique des emplacements et de la saturation de l'entrepôt.</p>
         <ul class="feat">
-          <li>Panneau « Saturation de l'entrepôt ».</li>
-          <li>Slotting dynamique : un SKU peut être réparti sur plusieurs emplacements ; un emplacement vidé accueille n'importe quel SKU ; prélèvement sur l'emplacement le plus rempli.</li>
-          <li>Réceptions refusées et mises en file (FIFO) quand l'entrepôt est saturé.</li>
-          <li>Boutons « 🧹 Réorganiser / Compacter le stock » et « ▶ Relancer les réceptions en attente ».</li>
+          <li data-i18n="v2.f1">Panneau « Saturation de l'entrepôt ».</li>
+          <li data-i18n="v2.f2">Slotting dynamique : un SKU peut être réparti sur plusieurs emplacements ; un emplacement vidé accueille n'importe quel SKU ; prélèvement sur l'emplacement le plus rempli.</li>
+          <li data-i18n="v2.f3">Réceptions refusées et mises en file (FIFO) quand l'entrepôt est saturé.</li>
+          <li data-i18n="v2.f4">Boutons « 🧹 Réorganiser / Compacter le stock » et « ▶ Relancer les réceptions en attente ».</li>
         </ul>
-        <div class="tags"><span class="tag">Capacité</span><span class="tag">Slotting</span><span class="tag">Compactage</span></div>
+        <div class="tags"><span class="tag" data-i18n="v2.t1">Capacité</span><span class="tag" data-i18n="v2.t2">Slotting</span><span class="tag" data-i18n="v2.t3">Compactage</span></div>
       </a>
     </li>
     <li>
       <a href="versions/v1.html">
-        <div class="top"><span class="ver">v1</span><span class="title">Version initiale</span><span class="date">Créée le 13/08/2026 à 09:09</span></div>
-        <p class="desc">Le socle de la démo : un entrepôt simulé piloté par le WCS.</p>
+        <div class="top"><span class="ver">v1</span><span class="title" data-i18n="v1.title">Version initiale</span><span class="date" data-i18n="created" data-d="13/08/2026" data-h="09:09">Créée le 13/08/2026 à 09:09</span></div>
+        <p class="desc" data-i18n="v1.desc">Le socle de la démo : un entrepôt simulé piloté par le WCS.</p>
         <ul class="feat">
-          <li>Plan de l'entrepôt animé, équipements (AGV, convoyeurs, trieur), file des commandes / tâches et journal d'événements.</li>
-          <li>Stocks par emplacement (bins) et interface WMS ↔ WCS simulée.</li>
-          <li>Pilotage : pause, vitesse 1×/2×/4×, réinitialisation, génération automatique de commandes, nouvelle commande (push WMS), réception fournisseur, panne / réparation d'équipement.</li>
+          <li data-i18n="v1.f1">Plan de l'entrepôt animé, équipements (AGV, convoyeurs, trieur), file des commandes / tâches et journal d'événements.</li>
+          <li data-i18n="v1.f2">Stocks par emplacement (bins) et interface WMS ↔ WCS simulée.</li>
+          <li data-i18n="v1.f3">Pilotage : pause, vitesse 1×/2×/4×, réinitialisation, génération automatique de commandes, nouvelle commande (push WMS), réception fournisseur, panne / réparation d'équipement.</li>
         </ul>
-        <div class="tags"><span class="tag">Dispatching</span><span class="tag">Simulation</span><span class="tag">Interface WMS</span></div>
+        <div class="tags"><span class="tag" data-i18n="v1.t1">Dispatching</span><span class="tag" data-i18n="v1.t2">Simulation</span><span class="tag" data-i18n="v1.t3">Interface WMS</span></div>
       </a>
     </li>
   </ol>
 
-  <footer>Chaque version s'ouvre en plein écran ; le bouton « ← Versions » en bas à gauche ramène à cette page. Heures exprimées en heure de Paris.</footer>
+  <footer data-i18n="footer">Chaque version s'ouvre en plein écran ; le bouton « ← Versions » en bas à gauche ramène à cette page. Heures exprimées en heure de Paris.</footer>
 </div>
+<script>
+(function(){
+  var KEY = "wcs-lang", lang = "fr";
+  // Priorité : argument d'URL (?lang=en) > choix mémorisé > français
+  try { var v = localStorage.getItem(KEY); if (v === "fr" || v === "en") lang = v; } catch (e) {}
+  try { var q = new URLSearchParams(location.search).get("lang"); if (q === "fr" || q === "en") lang = q; } catch (e) {}
+
+  var EN = {
+    "intro": "Interactive WCS demo: dispatching of orders received from the WMS, simulation of AGVs, conveyors and a sorter, storage location (bin) management and a simulated WMS ↔ WCS interface.",
+    "cta": "▶ Open the latest version (v5)", "history": "Version history", "badge": "Default version",
+    "created": "Created on {d} at {h}",
+    "footer": "Each version opens full screen; the “← Versions” button at the bottom left brings you back to this page. Times are Paris time.",
+    "v5.title": "French / English", "v5.desc": "The demo is now bilingual, with French as the default language.",
+    "v5.f1": "FR / EN switch in the demo header and on this page; the choice is remembered in the browser.",
+    "v5.f2": "Interface, legend, indicators, product names and event-log messages are translated.",
+    "v5.f3": "The event log is re-translated on the fly when switching language, history included.",
+    "v5.t1": "Internationalization", "v5.t2": "French", "v5.t3": "English",
+    "v4.title": "Targeted urgent order", "v4.desc": "The WCS can react to stock-outs that block orders, instead of waiting for a random supplier receipt.",
+    "v4.f1": "“🚨 Launch urgent order” button: replenishment targeted at out-of-stock references, enabled only when there is something to order.",
+    "v4.f2": "“Also include low-stock references” option (threshold at SKU level, all locations combined).",
+    "v4.f3": "Stock-out detection at catalog level, even after the last location was released by dynamic slotting.",
+    "v4.f4": "Urgent receipts prioritized in the waiting queue; blocking reason shown on orders (stock, AGV unavailable…).",
+    "v4.t1": "Replenishment", "v4.t2": "Stock-outs", "v4.t3": "Prioritization",
+    "v3.title": "Explicit release of receipts", "v3.desc": "Behavior fix: a blocked receipt is no longer retried automatically on every cycle.",
+    "v3.f1": "As in a real WCS, a flow in error does not resolve by itself: you have to compact the stock or click “Retry pending receipts”.",
+    "v3.f2": "Alert message in the log when a location is freed while receipts are pending.",
+    "v3.t1": "Exception handling", "v3.t2": "Operational realism",
+    "v2.title": "Saturation &amp; dynamic slotting", "v2.desc": "Introduction of the physical capacity of locations and warehouse saturation.",
+    "v2.f1": "“Warehouse saturation” panel.",
+    "v2.f2": "Dynamic slotting: a SKU can be spread over several locations; an emptied location accepts any SKU; picking from the fullest location.",
+    "v2.f3": "Receipts refused and queued (FIFO) when the warehouse is full.",
+    "v2.f4": "“🧹 Reorganize / Compact stock” and “▶ Retry pending receipts” buttons.",
+    "v2.t1": "Capacity", "v2.t2": "Slotting", "v2.t3": "Compaction",
+    "v1.title": "Initial version", "v1.desc": "The foundation of the demo: a simulated warehouse driven by the WCS.",
+    "v1.f1": "Animated warehouse map, equipment (AGVs, conveyors, sorter), order / task queue and event log.",
+    "v1.f2": "Stock per location (bins) and simulated WMS ↔ WCS interface.",
+    "v1.f3": "Controls: pause, 1×/2×/4× speed, reset, automatic order generation, new order (WMS push), supplier receipt, equipment fault / repair.",
+    "v1.t1": "Dispatching", "v1.t2": "Simulation", "v1.t3": "WMS interface"
+  };
+
+  var nodes = [].slice.call(document.querySelectorAll("[data-i18n]"));
+  nodes.forEach(function(n){ n.setAttribute("data-fr", n.innerHTML); });
+
+  function apply(){
+    document.documentElement.lang = lang;
+    nodes.forEach(function(n){
+      var txt = n.getAttribute("data-fr");
+      if (lang === "en") {
+        txt = EN[n.dataset.i18n] || txt;
+        txt = txt.replace("{d}", n.dataset.d || "").replace("{h}", n.dataset.h || "");
+      }
+      n.innerHTML = txt;
+    });
+    document.querySelectorAll("#langGrp button").forEach(function(b){ b.classList.toggle("active", b.dataset.lang === lang); });
+    document.title = lang === "en" ? "WCS PoC — Versions" : "PoC WCS — Versions";
+  }
+  document.querySelectorAll("#langGrp button").forEach(function(b){
+    b.addEventListener("click", function(){
+      lang = b.dataset.lang;
+      try { localStorage.setItem(KEY, lang); } catch (e) {}
+      try { var u = new URL(location.href); u.searchParams.set("lang", lang); history.replaceState(null, "", u); } catch (e) {}
+      apply();
+    });
+  });
+  apply();
+})();
+</script>
 </body>
 </html>
