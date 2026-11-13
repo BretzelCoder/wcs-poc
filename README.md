@@ -13,3 +13,7 @@ Démo interactive d'un WCS : dispatching des commandes reçues du WMS, simulatio
 | [v1](https://bretzelcoder.github.io/wcs-poc/versions/v1.html) | 13/08/2026 09:09 | Version initiale : plan animé, équipements, stocks, interface WMS simulée |
 
 Chaque version est un fichier HTML autonome dans `versions/`. Depuis la v5, la démo et la page d'accueil sont disponibles en français (défaut) et en anglais ; le choix est mémorisé dans le navigateur.
+
+## Mesure d'audience
+
+Le site en ligne compte les visites avec [GoatCounter](https://www.goatcounter.com/) : sans cookie, sans donnée personnelle, statistiques agrégées uniquement (pages vues, provenance, pays, navigateur, taille d'écran). Il enregistre aussi des événements anonymes : la langue affichée à l'ouverture et les changements de langue (page d'accueil et v5). La mesure ne fonctionne que sur GitHub Pages ; une copie locale ne charge rien. Pour attribuer un lien partagé, ajoutez-lui `?ref=<source>` (par exemple `?ref=linkedin`).

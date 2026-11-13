@@ -47,6 +47,24 @@
   footer{margin-top:48px;color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:18px}
   @media (max-width:560px){ .date{margin-left:0;width:100%} }
 </style>
+<!-- Mesure d'audience GoatCounter : sans cookie, données agrégées, active uniquement sur GitHub Pages -->
+<script>
+(function () {
+  var host = 'bretzelcoder.github.io', queue = [];
+  window.gcEvent = function (p, title) {
+    var gc = window.goatcounter;
+    if (gc && typeof gc.count === 'function') { try { gc.count({ path: p, title: title || p, event: true }); } catch (e) {} }
+    else if (location.hostname === host && queue.length < 20) queue.push([p, title]);
+  };
+  if (location.hostname !== host) return;
+  window.goatcounter = { path: function () { return location.pathname; } };
+  var s = document.createElement('script');
+  s.async = true; s.src = 'https://gc.zgo.at/count.js';
+  s.setAttribute('data-goatcounter', 'https://bretzelgoatcounter.goatcounter.com/count');
+  s.onload = function () { while (queue.length) { var e = queue.shift(); window.gcEvent(e[0], e[1]); } };
+  document.head.appendChild(s);
+})();
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -182,6 +200,7 @@
   }
   document.querySelectorAll("#langGrp button").forEach(function(b){
     b.addEventListener("click", function(){
+      if (b.dataset.lang !== lang && window.gcEvent) gcEvent("wcs-poc/lang-switch/" + b.dataset.lang, "wcs-poc · langue choisie : " + b.dataset.lang.toUpperCase());
       lang = b.dataset.lang;
       try { localStorage.setItem(KEY, lang); } catch (e) {}
       try { var u = new URL(location.href); u.searchParams.set("lang", lang); history.replaceState(null, "", u); } catch (e) {}
@@ -189,6 +208,7 @@
     });
   });
   apply();
+  if (window.gcEvent) gcEvent("wcs-poc/lang-start/" + lang, "wcs-poc · langue à l'ouverture : " + lang.toUpperCase());
 })();
 </script>
 </body>
